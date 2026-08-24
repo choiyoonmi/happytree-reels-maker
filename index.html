@@ -724,7 +724,9 @@ function scoreAsset(a,mode){
 async function ingestFiles(files){
   mediaAssets.forEach(revokeAsset);mediaAssets=[];generatedCoverAsset=null;selectedScenes=[null,null,null,null,null];$("#mediaPool").innerHTML='<div class="small">분석 중...</div>';
   for(const f of [...files].slice(0,20)){try{const a=await fileMeta(f);a.score=scoreAsset(a,$("#selectMode").value);mediaAssets.push(a)}catch(e){}}
-  mediaAssets.sort((a,b)=>b.score-a.score);renderMediaPool();renderVideoScenes();$("#status").textContent=`${mediaAssets.length}개 소재 분석 완료. 자동 선별을 눌러 주세요.`;
+  mediaAssets.sort((a,b)=>b.score-a.score);renderMediaPool();
+  if(activePlan&&mediaAssets.length)autoSelect();
+  else{renderVideoScenes();$("#status").textContent=mediaAssets.length?`${mediaAssets.length}개 소재 분석 완료. 먼저 릴스 기획안을 만들어 주세요.`:"사용할 수 있는 사진·영상을 찾지 못했습니다.";}
 }
 function renderMediaPool(){
   $("#mediaPool").innerHTML=mediaAssets.length?mediaAssets.map(a=>`<div class="media-item"><div class="thumb">${a.type==="image"?`<img src="${a.url}">`:`<video src="${a.url}"></video>`}</div><div class="media-meta"><strong>${esc(a.name)}</strong><small>${a.type==="video"?"동영상":"사진"} · ${a.width}×${a.height}${a.type==="video"?" · "+a.duration.toFixed(1)+"초":""}</small></div><div><span class="badge ${a.score>=65?"b-good":"b-warn"}">${a.score>=65?"추천 ":"점수 "}${a.score}</span></div></div>`).join(""):'<div class="small">아직 업로드한 소재가 없습니다.</div>';
@@ -734,7 +736,7 @@ function autoSelect(){
   if(!activePlan){alert("먼저 릴스 기획안을 만들어 주세요.");return;}if(!mediaAssets.length){alert("먼저 사진·영상을 업로드해 주세요.");return;}
   let pool=[...mediaAssets].sort((a,b)=>b.score-a.score),picked=[];
   if($("#selectMode").value==="balanced"){const v=pool.filter(x=>x.type==="video"),im=pool.filter(x=>x.type==="image");picked=[v[0],im[0],v[1]||im[1],im[1]||v[2],pool.find(x=>!picked.includes(x))].filter(Boolean)}else picked=pool.slice(0,5);
-  while(picked.length<5)picked.push(pool[picked.length]||null);selectedScenes=picked.slice(0,5);renderVideoScenes();angleLabel($("#program").value);generateHookRecommendations();drawPlaceholder();drawCover();$("#status").textContent="베스트 5개 장면 자동 선별 완료.";
+  while(picked.length<5)picked.push(pool[picked.length]||null);selectedScenes=picked.slice(0,5);renderVideoScenes();drawPlaceholder();drawCover();$("#status").textContent="업로드한 소재에서 베스트 5개 장면을 자동 배치했습니다. 미리보기를 눌러 확인하세요.";
 }
 $("#autoSelectBtn").onclick=autoSelect;$("#reshuffleBtn").onclick=()=>{if(!mediaAssets.length)return;mediaAssets.sort(()=>Math.random()-0.5);autoSelect();};
 window.pickScene=i=>{const n=parseInt(prompt("현재 점수 순 소재 번호를 입력하세요.","1"),10)-1;if(mediaAssets[n]){selectedScenes[i]=mediaAssets[n];renderVideoScenes();drawCover();}};
