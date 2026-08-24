@@ -783,7 +783,7 @@ function drawPlaceholder(){drawBase();if(activePlan)drawOverlay(activePlan.capti
 async function loadDrawable(asset){if(!asset)return null;if(asset.type==="image"){return await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=asset.url})}return await new Promise((res,rej)=>{const v=document.createElement("video");v.src=asset.url;v.muted=true;v.playsInline=true;v.preload="auto";v.onloadeddata=()=>res(v);v.onerror=rej})}
 function drawDrawable(dr,local,dur,alpha=1,offsetX=0,scale=1){
   if(!dr){ctx.save();ctx.globalAlpha=alpha;drawBase();ctx.restore();return}
-  if(dr.tagName==="VIDEO"){const target=Math.min(Math.max(0,local),Math.max(0,(dr.duration||dur)-.05));try{if(Math.abs((dr.currentTime||0)-target)>.18)dr.currentTime=target}catch(e){};if(dr.readyState>=2)coverDraw(ctx,dr,dr.videoWidth,dr.videoHeight,alpha,offsetX,scale);else drawBase()}
+  if(dr.tagName==="VIDEO"){if(dr.readyState>=2)coverDraw(ctx,dr,dr.videoWidth,dr.videoHeight,alpha,offsetX,scale)}
   else coverDraw(ctx,dr,dr.naturalWidth,dr.naturalHeight,alpha,offsetX,scale);
 }
 async function playTimeline(withAudio=true){
@@ -796,20 +796,32 @@ async function playTimeline(withAudio=true){
     const chosen=audioAsset||recordedAsset;
     if(chosen){try{previewAudio=new Audio(chosen.url);previewAudio.currentTime=0;await previewAudio.play()}catch(e){$("#status").textContent="음원 재생 권한을 확인한 뒤 미리보기를 다시 눌러 주세요.";}}
   }
-  const start=performance.now();
+  const start=performance.now();let lastIdx=-1;
+  const stopVideos=()=>dr.forEach(x=>{if(x&&x.tagName==="VIDEO")x.pause()});
   return await new Promise(resolve=>{
     function frame(now){
-      if(token!==previewToken){if(previewAudio)previewAudio.pause();resolve();return}
+      if(token!==previewToken){if(previewAudio)previewAudio.pause();stopVideos();resolve();return}
       const elapsed=(now-start)/1000,idx=Math.min(4,Math.floor(elapsed/dur)),local=elapsed-idx*dur;
-      ctx.clearRect(0,0,1080,1920);
       const inTrans=idx>0 && local<trans;
+      dr.forEach((item,j)=>{
+        if(!item||item.tagName!=="VIDEO")return;
+        const shouldPlay=j===idx||(inTrans&&j===idx-1);
+        if(shouldPlay){
+          if(j===idx&&lastIdx!==idx){try{item.currentTime=0}catch(e){}}
+          if(item.paused)item.play().catch(()=>{});
+        }else if(!item.paused)item.pause();
+      });
+      lastIdx=idx;
+      const current=dr[idx],frameReady=!current||current.tagName!=="VIDEO"||current.readyState>=2;
+      if(!frameReady){requestAnimationFrame(frame);return}
+      ctx.clearRect(0,0,1080,1920);
       if(type==="cut"||!inTrans){let scale=type==="zoom"?1+Math.min(.06,local/dur*.06):1;drawDrawable(dr[idx],local,dur,1,0,scale)}
       else if(type==="fade"){const p=local/trans;drawDrawable(dr[idx-1],dur-trans+local,dur,1-p);drawDrawable(dr[idx],local,dur,p)}
       else if(type==="slide"){const p=local/trans;drawDrawable(dr[idx-1],dur-trans+local,dur,1,-1080*p,1);drawDrawable(dr[idx],local,dur,1,1080*(1-p),1)}
       else if(type==="zoom"){const p=local/trans;drawDrawable(dr[idx-1],dur-trans+local,dur,1-p,0,1+.08*p);drawDrawable(dr[idx],local,dur,p,0,1.08-.08*p)}
       ctx.fillStyle="rgba(0,0,0,.12)";ctx.fillRect(0,0,1080,1920);drawOverlay(activePlan.captions[idx]||activePlan.program,idx);
       $("#bar").style.width=`${Math.min(100,elapsed/total*100)}%`;
-      if(elapsed<total)requestAnimationFrame(frame);else{if(previewAudio)previewAudio.pause();$("#bar").style.width="100%";$("#status").textContent="미리보기 완료.";resolve()}
+      if(elapsed<total)requestAnimationFrame(frame);else{if(previewAudio)previewAudio.pause();stopVideos();$("#bar").style.width="100%";$("#status").textContent="미리보기 완료.";resolve()}
     }
     requestAnimationFrame(frame)
   })
