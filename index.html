@@ -251,6 +251,14 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
       </div>
       <div class="small" id="recordState" style="margin-top:6px">원장님 목소리로 직접 녹음할 수 있습니다.</div>
 
+      <div class="card" style="margin-top:14px">
+        <h4>내 목소리 AI 등록 <span>본인 음성만 가능</span></h4>
+        <div class="field"><label>1~2분의 깨끗한 음성 샘플</label><input type="file" id="voiceCloneFile" accept="audio/*"></div>
+        <label style="display:flex;gap:8px;align-items:flex-start;font-weight:600;line-height:1.45"><input type="checkbox" id="voiceConsent" style="width:auto;margin-top:3px">이 음성은 본인의 목소리이며 AI 음성 복제와 대본 낭독 생성에 동의합니다.</label>
+        <div class="rowbtns" style="margin-top:10px"><button class="btn sub" id="cloneVoiceBtn">내 목소리 등록</button><button class="btn primary" id="generateVoiceBtn">현재 대본을 내 목소리로 생성</button></div>
+        <div class="small" id="cloneVoiceState" style="margin-top:7px">처음 한 번 목소리를 등록하면 이후 대본을 같은 목소리로 만들 수 있습니다.</div>
+      </div>
+
       <div class="rowbtns" style="margin-top:12px">
         <button class="btn primary" id="autoSelectBtn">자동 선별하기</button>
         <button class="btn ghost" id="reshuffleBtn">다시 고르기</button>
@@ -348,7 +356,7 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 let makerTarget="학원장", cloneTarget="학원장", current=null, cloneCurrent=null, activePlan=null;
 let mediaAssets=[], selectedScenes=[null,null,null,null,null], generatedCoverAsset=null;
-let audioAsset=null, recordedAsset=null, mediaRecorder=null, recordedChunks=[], recStream=null;
+let audioAsset=null, recordedAsset=null, mediaRecorder=null, recordedChunks=[], recStream=null, clonedVoiceId=localStorage.getItem("happytreeVoiceId")||"";
 let previewToken=0, isExporting=false, subtitleStyle="premium", coverAsset=null;
 
 const DATA={
@@ -746,8 +754,23 @@ function renderVideoScenes(){
   $("#videoScenes").innerHTML=activePlan.shots.map((s,i)=>{const a=selectedScenes[i];return `<div class="scene"><strong>${i+1}. ${esc(s[1])}</strong><small>${esc(s[2])}<br>자막: ${esc(activePlan.captions[i]||"")}</small><div class="scene-actions"><button onclick="pickScene(${i})">교체</button><button onclick="clearScene(${i})">비우기</button><span class="small ${a?"ok":""}">${a?esc(a.name):"자동 배정 전"}</span></div></div>`}).join("");
 }
 $("#audioFile").onchange=e=>{if(audioAsset)revokeAsset(audioAsset);const f=e.target.files[0];audioAsset=f?{file:f,url:URL.createObjectURL(f)}:null;$("#recordState").textContent=f?"업로드 오디오 사용 준비 완료.":"오디오가 선택되지 않았습니다.";};
-$("#startRecord").onclick=async()=>{try{recStream=await navigator.mediaDevices.getUserMedia({audio:true});recordedChunks=[];mediaRecorder=new MediaRecorder(recStream);mediaRecorder.ondataavailable=e=>{if(e.data.size)recordedChunks.push(e.data)};mediaRecorder.onstop=()=>{if(recordedAsset)revokeAsset(recordedAsset);const blob=new Blob(recordedChunks,{type:"audio/webm"});recordedAsset={url:URL.createObjectURL(blob)};$("#recordState").textContent="녹음 저장 완료. 영상에 사용할 수 있습니다.";};mediaRecorder.start();$("#recordState").textContent="녹음 중...";}catch(e){alert("마이크 권한이 필요합니다.");}};
+$("#startRecord").onclick=async()=>{try{recStream=await navigator.mediaDevices.getUserMedia({audio:true});recordedChunks=[];mediaRecorder=new MediaRecorder(recStream);mediaRecorder.ondataavailable=e=>{if(e.data.size)recordedChunks.push(e.data)};mediaRecorder.onstop=()=>{if(recordedAsset)revokeAsset(recordedAsset);const blob=new Blob(recordedChunks,{type:"audio/webm"});recordedAsset={url:URL.createObjectURL(blob),blob};$("#recordState").textContent="녹음 저장 완료. 영상에 사용할 수 있습니다.";};mediaRecorder.start();$("#recordState").textContent="녹음 중...";}catch(e){alert("마이크 권한이 필요합니다.");}};
 $("#stopRecord").onclick=()=>{if(mediaRecorder&&mediaRecorder.state!=="inactive"){mediaRecorder.stop();if(recStream){recStream.getTracks().forEach(t=>t.stop());recStream=null;}}};
+if(clonedVoiceId)$("#cloneVoiceState").textContent="등록된 내 목소리가 있습니다. 현재 대본을 바로 생성할 수 있습니다.";
+$("#cloneVoiceBtn").onclick=async()=>{
+  if(!$("#voiceConsent").checked){alert("본인 음성 및 복제 동의를 확인해 주세요.");return;}
+  const uploaded=$("#voiceCloneFile").files[0], sample=uploaded||(recordedAsset&&recordedAsset.blob);
+  if(!sample){alert("1~2분 음성 파일을 선택하거나 먼저 목소리를 녹음해 주세요.");return;}
+  const fd=new FormData();fd.append("sample",sample,uploaded?uploaded.name:"내목소리.webm");fd.append("consent","true");fd.append("name","해피트리 원장 목소리");
+  $("#cloneVoiceState").textContent="내 목소리를 등록하는 중입니다...";
+  try{const res=await fetch("/api/voice/clone",{method:"POST",body:fd});const data=await res.json();if(!res.ok)throw new Error(data.error||"등록 실패");clonedVoiceId=data.voiceId;localStorage.setItem("happytreeVoiceId",clonedVoiceId);$("#cloneVoiceState").textContent="내 목소리 등록 완료. 이제 대본을 같은 목소리로 만들 수 있습니다.";}catch(e){$("#cloneVoiceState").textContent=`목소리 등록 실패 · ${e.message}`;}
+};
+$("#generateVoiceBtn").onclick=async()=>{
+  if(!clonedVoiceId){alert("먼저 내 목소리를 등록해 주세요.");return;}
+  const text=clean($("#voiceScript").value);if(!text){alert("생성할 보이스오버 대본이 없습니다.");return;}
+  $("#cloneVoiceState").textContent="내 목소리로 음원을 생성하는 중입니다...";
+  try{const res=await fetch("/api/voice/synthesize",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({voiceId:clonedVoiceId,text})});if(!res.ok){const data=await res.json();throw new Error(data.error||"생성 실패");}const blob=await res.blob();if(audioAsset)revokeAsset(audioAsset);audioAsset={url:URL.createObjectURL(blob),blob};$("#cloneVoiceState").textContent="내 목소리 음원 생성 완료. 미리보기와 영상 저장에 자동 적용됩니다.";}catch(e){$("#cloneVoiceState").textContent=`음원 생성 실패 · ${e.message}`;}
+};
 
 const canvas=$("#canvas"),ctx=canvas.getContext("2d");
 function roundedRect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
