@@ -270,7 +270,7 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
       <div class="field"><label>표지용 사진 직접 선택 <span class="small">(선택)</span></label><input type="file" id="coverFile" accept="image/*"></div>
       <div class="field"><label>하단 브랜드 문구</label><input id="coverBrand" value="국영수 문해력센터 해피트리학원"></div>
       <div class="rowbtns">
-        <button class="btn sub" id="makeThumb">썸네일 만들기</button>
+        <button class="btn sub" id="makeThumb">썸네일 만들기 · 영상 첫 장면 적용</button>
         <button class="btn primary" id="saveCover">표지 PNG 저장</button>
       </div>
     </div>
@@ -341,7 +341,7 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
 <script>
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 let makerTarget="학부모", cloneTarget="학부모", current=null, cloneCurrent=null, activePlan=null;
-let mediaAssets=[], selectedScenes=[null,null,null,null,null];
+let mediaAssets=[], selectedScenes=[null,null,null,null,null], generatedCoverAsset=null;
 let audioAsset=null, recordedAsset=null, mediaRecorder=null, recordedChunks=[], recStream=null;
 let previewToken=0, isExporting=false, subtitleStyle="premium", coverAsset=null;
 
@@ -664,7 +664,7 @@ function scoreAsset(a,mode){
   s+=Math.min(12,(a.size/1024/1024)*2);return Math.round(s);
 }
 async function ingestFiles(files){
-  mediaAssets.forEach(revokeAsset);mediaAssets=[];selectedScenes=[null,null,null,null,null];$("#mediaPool").innerHTML='<div class="small">분석 중...</div>';
+  mediaAssets.forEach(revokeAsset);mediaAssets=[];generatedCoverAsset=null;selectedScenes=[null,null,null,null,null];$("#mediaPool").innerHTML='<div class="small">분석 중...</div>';
   for(const f of [...files].slice(0,20)){try{const a=await fileMeta(f);a.score=scoreAsset(a,$("#selectMode").value);mediaAssets.push(a)}catch(e){}}
   mediaAssets.sort((a,b)=>b.score-a.score);renderMediaPool();renderVideoScenes();$("#status").textContent=`${mediaAssets.length}개 소재 분석 완료. 자동 선별을 눌러 주세요.`;
 }
@@ -754,7 +754,7 @@ async function exportVideo(){
   const ext=mime.includes("mp4")?"mp4":"webm",blob=new Blob(chunks,{type:mime}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`해피트리_${activePlan.program}_릴스.${ext}`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);$("#status").textContent=`영상 저장 완료 · ${ext.toUpperCase()}`;isExporting=false;$("#exportVideo").disabled=false;
 }
 $("#exportVideo").onclick=exportVideo;
-$("#resetVideo").onclick=()=>{previewToken++;mediaAssets.forEach(revokeAsset);mediaAssets=[];selectedScenes=[null,null,null,null,null];if(audioAsset)revokeAsset(audioAsset);if(recordedAsset)revokeAsset(recordedAsset);audioAsset=recordedAsset=null;$("#mediaFiles").value="";$("#audioFile").value="";renderMediaPool();renderVideoScenes();drawPlaceholder();$("#bar").style.width="0";$("#status").textContent="초기화되었습니다.";};
+$("#resetVideo").onclick=()=>{previewToken++;mediaAssets.forEach(revokeAsset);mediaAssets=[];generatedCoverAsset=null;selectedScenes=[null,null,null,null,null];if(audioAsset)revokeAsset(audioAsset);if(recordedAsset)revokeAsset(recordedAsset);audioAsset=recordedAsset=null;$("#mediaFiles").value="";$("#audioFile").value="";renderMediaPool();renderVideoScenes();drawPlaceholder();$("#bar").style.width="0";$("#status").textContent="초기화되었습니다.";};
 
 const coverCanvas=$("#coverCanvas"),cctx=coverCanvas.getContext("2d");
 $("#coverFile").onchange=e=>{if(coverAsset)revokeAsset(coverAsset);const f=e.target.files[0];coverAsset=f?{url:URL.createObjectURL(f),type:"image"}:null;drawCover();};
@@ -790,7 +790,23 @@ async function drawCover(){
   cctx.fillStyle=dark?"rgba(255,255,255,.9)":"#142b4f";cctx.font="700 34px system-ui";cctx.fillText(brand,80,1770);
   cctx.fillStyle=dark?"#c7a456":"#c7a456";cctx.fillRect(80,1815,210,8);
 }
-$("#makeThumb").onclick=drawCover;
+async function applyCoverToVideo(){
+  if(!activePlan){alert("먼저 릴스 기획안을 만들어 주세요.");return;}
+  await drawCover();
+  const blob=await new Promise(resolve=>coverCanvas.toBlob(resolve,"image/png"));
+  if(!blob){alert("표지를 영상 장면으로 변환하지 못했습니다.");return;}
+  if(generatedCoverAsset){
+    mediaAssets=mediaAssets.filter(a=>a!==generatedCoverAsset);
+    revokeAsset(generatedCoverAsset);
+  }
+  const file=new File([blob],`해피트리_${activePlan.program}_표지.png`,{type:"image/png"});
+  generatedCoverAsset={file,url:URL.createObjectURL(blob),type:"image",name:file.name,size:file.size,width:1080,height:1920,duration:0,aspect:9/16,score:100,isGeneratedCover:true};
+  mediaAssets.unshift(generatedCoverAsset);
+  selectedScenes[0]=generatedCoverAsset;
+  renderMediaPool();renderVideoScenes();drawPlaceholder();
+  $("#status").textContent="만든 표지를 영상 첫 장면에 적용했습니다.";
+}
+$("#makeThumb").onclick=applyCoverToVideo;
 $("#saveCover").onclick=async()=>{await drawCover();const a=document.createElement("a");a.href=coverCanvas.toDataURL("image/png");a.download=`해피트리_${activePlan?activePlan.program:"릴스"}_표지.png`;a.click();};
 
 angleLabel($("#program").value);generateHookRecommendations();drawPlaceholder();drawCover();
