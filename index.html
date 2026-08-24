@@ -149,15 +149,15 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
   <div id="makerForm">
     <div class="ph"><h3>새 릴스 만들기</h3><p>후킹·대본·촬영 장면을 만듭니다.</p></div>
     <div class="pb">
-      <div class="field"><label>홍보할 것</label>
+      <div class="field"><label>콘텐츠 주제</label>
         <select id="program">
-          <option>문해숨</option><option>수학숨</option><option>구문숨</option><option>트리톡</option>
+          <option>문해숨</option><option>수학숨</option><option>원장님 고민 나누기</option><option>구문숨</option><option>트리톡</option>
           <option>방학특강</option><option>성장리포트</option><option>시험분석</option><option>학습시스템</option><option>신규상담</option>
         </select>
       </div>
       <div class="field"><label>누구의 관심을 끌까요?</label><div class="segment makerTarget"><button class="chip" data-value="학부모">학부모</button><button class="chip active" data-value="학원장">학원장</button></div></div>
       <div class="field"><label>톤</label>
-        <select id="tone"><option>직설형</option><option>공감형</option><option>원장철학형</option><option>정보형</option><option>반전형</option><option>프리미엄형</option></select>
+        <select id="tone"><option>직설형</option><option>공감형</option><option>대화형</option><option>원장철학형</option><option>정보형</option><option>반전형</option><option>프리미엄형</option></select>
       </div>
       <div class="hook-maker">
         <div class="hook-maker-head">
@@ -204,7 +204,7 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
       <div class="field"><label>릴스 링크 <span class="small">(기록용)</span></label><input id="reelUrl" placeholder="https://www.instagram.com/reel/..."></div>
       <div class="field"><label>원본 자막·대본</label><textarea id="sourceText" style="min-height:180px" placeholder="벤치마킹 릴스의 자막/대본을 붙여넣으세요."></textarea></div>
       <div class="field"><label>해피트리 프로그램</label>
-        <select id="cloneProgram"><option>문해숨</option><option>수학숨</option><option>구문숨</option><option>트리톡</option><option>방학특강</option><option>성장리포트</option><option>시험분석</option><option>학습시스템</option><option>신규상담</option></select>
+        <select id="cloneProgram"><option>문해숨</option><option>수학숨</option><option>원장님 고민 나누기</option><option>구문숨</option><option>트리톡</option><option>방학특강</option><option>성장리포트</option><option>시험분석</option><option>학습시스템</option><option>신규상담</option></select>
       </div>
       <div class="field"><label>누구의 관심을 끌까요?</label><div class="segment cloneTarget"><button class="chip" data-value="학부모">학부모</button><button class="chip active" data-value="학원장">학원장</button></div></div>
       <button class="btn primary" id="cloneBtn" style="width:100%">분석하고 해피트리 버전 만들기</button>
@@ -354,6 +354,7 @@ let previewToken=0, isExporting=false, subtitleStyle="premium", coverAsset=null;
 const DATA={
 "문해숨":{p:"문제는 풀었는데 왜 틀렸는지 설명하지 못하는 아이",o:"문해력 수업을 차별화하고 싶지만 시중 자료만으로는 부족한 학원",proof:"아이의 읽기·이해·설명 과정을 실제 기록으로 남기는 모습",sol:"문해에 숨을 불어넣는 해피트리 자체 문해력 시스템, 문해숨",scene:"문해숨 화면과 학생 풀이"},
 "수학숨":{p:"계산은 하는데 문장제만 나오면 멈추는 아이",o:"연산과 문제풀이 사이 사고 과정을 보여주기 어려운 학원",proof:"풀이 과정과 오답 이유를 확인하는 실제 학습 기록",sol:"수학 풀이에 생각의 숨을 넣는 해피트리 자체 시스템, 수학숨",scene:"수학 풀이과정과 오답 화면"},
+"원장님 고민 나누기":{p:"좋은 수업을 만들고도 학부모에게 제대로 알리기 어려운 원장님의 고민",o:"수업·상담·운영을 혼자 책임지며 정답 없이 결정해야 하는 원장님의 현실",proof:"해피트리가 직접 부딪히고 바꾸어 온 실제 운영 경험과 질문",sol:"정답을 가르치기보다 원장님들의 고민과 방법을 함께 나누는 해피트리 원장 대화",scene:"원장의 진솔한 이야기·수업 현장·운영 기록"},
 "구문숨":{p:"단어는 아는데 긴 문장만 나오면 해석이 끊기는 아이",o:"중등 구문독해를 체계적으로 누적시키고 싶은 학원",proof:"문장을 끊고 구조를 표시하며 해석하는 실제 과정",sol:"문장 구조를 눈에 보이게 만드는 구문독해 시스템, 구문숨",scene:"구문 나누기와 해석 장면"},
 "트리톡":{p:"영어 숙제를 했지만 실제로 소리 내어 읽었는지 알 수 없는 상황",o:"학생 낭독·말하기 숙제를 확인하고 기록하기 어려운 학원",proof:"학생이 직접 녹음하고 발음을 확인하는 실제 화면",sol:"해피트리 낭독·말하기 기록 시스템, 트리톡",scene:"녹음 화면과 학생 낭독"},
 "방학특강":{p:"아이를 특강에 보내도 하루가 그냥 지나가 버리는 방학",o:"특강을 열어도 가격과 교재만으로 차별화하기 어려운 학원",proof:"특강 수업, 점심, 독서지도, 독후활동까지 이어지는 하루",sol:"한 과목이 아니라 하루의 학습 경험을 설계한 해피트리 방학특강",scene:"수업·점심·독서·독후활동"},
@@ -365,6 +366,7 @@ const DATA={
 const TONE_OPENERS={
 "직설형":["솔직히,","이제는","많이들 놓치는 게 있습니다."],
 "공감형":["학부모님들이 가장 많이 하는 말이 있습니다.","아이를 보내놓고도 이런 마음이 들 때가 있죠.","저도 현장에서 자주 봅니다."],
+"대화형":["원장님들은 이럴 때 어떻게 하시나요?","저만 이런 고민을 하는 건 아닐 것 같습니다.","오늘은 답보다 고민부터 함께 나눠보려 합니다."],
 "원장철학형":["아이들을 오래 가르치다 보니 한 가지가 분명해졌습니다.","원장인 제가 직접 만들게 된 이유가 있습니다.","수업을 운영할수록 더 선명해진 기준이 있습니다."],
 "정보형":["이 부분은 꼭 확인해 보세요.","결과보다 먼저 봐야 할 것이 있습니다.","학습에서 놓치기 쉬운 지점입니다."],
 "반전형":["문제는 실력이 아니었습니다.","의외로 원인은 다른 곳에 있습니다.","잘하고 있는데도 결과가 안 나오는 이유가 있습니다."],
@@ -391,6 +393,15 @@ const ANGLES={
     ["수학도 문해력이 필요","수학 문해력"],
     ["원장이 직접 만든 이유","자체개발 이유"],
     ["문제를 많이 푸는 것의 한계","양보다 사고과정"]
+  ],
+  "원장님 고민 나누기":[
+    ["좋은 수업인데 신규 상담이 줄어드는 고민","신규 상담·등록"],
+    ["재등록을 부탁하는 느낌이 들어 힘든 고민","재등록·신뢰"],
+    ["다른 학원과 차별점을 설명하기 어려운 고민","학원 차별화"],
+    ["학부모 상담에서 어디까지 말해야 할지 고민","학부모 상담"],
+    ["선생님에게 원장의 기준을 전달하기 어려운 고민","교사 관리"],
+    ["모든 일을 혼자 책임지는 원장의 번아웃","원장 번아웃"],
+    ["학원 운영을 시스템으로 만들고 싶은 고민","운영 시스템화"]
   ],
   "구문숨":[
     ["단어는 아는데 해석이 안됨","긴 문장 해석"],
@@ -451,6 +462,15 @@ const ANGLES={
 };
 
 const HOOK_BANK={
+  "원장님 고민 나누기":{
+    "좋은 수업인데 신규 상담이 줄어드는 고민":["수업은 좋아졌는데 왜 신규 상담은 줄어들까요?","광고를 더 해야 할지, 학원의 이야기를 바꿔야 할지 고민됩니다.","원장님들은 상담이 줄어들 때 가장 먼저 무엇을 점검하시나요?"],
+    "재등록을 부탁하는 느낌이 들어 힘든 고민":["재등록을 부탁하지 않아도 선택받는 학원은 무엇이 다를까요?","재등록 상담을 앞두면 원장인 저도 마음이 무거워집니다.","수업의 가치를 평소에 어떻게 보여줘야 재등록이 자연스러울까요?"],
+    "다른 학원과 차별점을 설명하기 어려운 고민":["우리 학원만의 차이를 한 문장으로 설명할 수 있으신가요?","좋은 수업이라는 말만으로는 차별화가 되지 않는 시대입니다.","원장님 학원을 선택해야 하는 이유, 학부모에게 어떻게 보여주고 계신가요?"],
+    "학부모 상담에서 어디까지 말해야 할지 고민":["학부모 상담, 솔직함과 안심 사이에서 어디까지 말해야 할까요?","아이의 부족한 점을 전하면서도 신뢰를 잃지 않는 방법이 늘 고민입니다.","원장님들은 어려운 상담을 어떻게 시작하시나요?"],
+    "선생님에게 원장의 기준을 전달하기 어려운 고민":["원장의 머릿속 기준이 선생님에게 그대로 전달되지 않을 때가 있습니다.","같은 교재를 써도 수업의 기준이 달라지는 문제, 어떻게 풀고 계신가요?","교사 관리보다 먼저 필요한 건 원장의 기준을 보이게 만드는 일일 수 있습니다."],
+    "모든 일을 혼자 책임지는 원장의 번아웃":["원장님, 학원을 운영하며 정작 본인은 괜찮으신가요?","수업·상담·홍보·관리까지 혼자 잘하려다 지쳐버릴 때가 있습니다.","원장이라는 이유로 힘들다는 말도 못 하고 있지는 않으신가요?"],
+    "학원 운영을 시스템으로 만들고 싶은 고민":["원장이 없어도 기준대로 움직이는 학원, 어디서부터 만들어야 할까요?","매번 직접 확인하지 않으면 멈추는 운영에서 벗어나고 싶었습니다.","시스템은 거창한 프로그램보다 반복되는 기준을 기록하는 데서 시작됩니다."]
+  },
   "문해숨":{
     "문해력 부족이 다른 과목까지 영향":["국어 프로그램인데 수학·영어 상담까지 달라지는 이유가 있습니다.","전 과목 성적의 막힌 지점, 문해력에서 먼저 보일 수 있습니다.","학원장님, 아이가 문제를 못 푸는 이유를 과목 탓만 하고 있지는 않나요?"],
     "문제집만 더 푸는 방식의 한계":["문제집을 더 풀리는데 설명하는 힘은 왜 그대로일까요?","문제 수가 아니라 읽고 설명하는 과정이 학원의 차이를 만듭니다.","시중 문제집만으로 문해력 수업을 차별화하기 어려웠습니다."],
@@ -516,6 +536,11 @@ const HOOK_BANK={
 function angleLabel(program){
   const sel=$("#angle"), list=ANGLES[program]||[];
   sel.innerHTML=list.map(x=>`<option value="${esc(x[0])}">${esc(x[1])}</option>`).join("");
+}
+function defaultEnding(program){
+  return program==="원장님 고민 나누기"
+    ? "원장님들은 어떻게 풀고 계신가요? 경험과 방법을 함께 나눠주세요."
+    : "문해숨·수학숨이 궁금한 원장님, 해피트리의 실제 운영 방식을 확인해 보세요.";
 }
 
 function genericHookPool(program, angle, target){
@@ -593,10 +618,11 @@ function buildPlan(program,target,msg,must,style,tone="직설형"){
   const hooks=[
     core.length>46?core.slice(0,46)+"…":core,
     `${pick(op,1)} ${pain}의 진짜 이유를 보여드릴게요.`,
-    target==="학부모"?"보내는 것보다 중요한 건, 아이의 공부가 보이게 만드는 겁니다.":"좋은 프로그램도 선택할 이유가 보여야 합니다."
+    program==="원장님 고민 나누기"?"답을 정하기보다 원장님들의 경험을 함께 듣고 싶습니다.":target==="학부모"?"보내는 것보다 중요한 건, 아이의 공부가 보이게 만드는 겁니다.":"좋은 프로그램도 선택할 이유가 보여야 합니다."
   ];
   let script;
-  if(style==="story") script=`[0–3초] ${hooks[0]}\n[4–8초] 원장인 제가 현장에서 이 문제를 계속 봤습니다.\n[9–14초] 그래서 ${d.proof}.\n[15–19초] ${d.sol}.\n[20–23초] ${end}`;
+  if(program==="원장님 고민 나누기") script=`[0–3초] ${hooks[0]}\n[4–8초] 저도 학원을 운영하며 같은 고민 앞에서 자주 멈췄습니다.\n[9–14초] 정답보다 먼저, 우리가 실제로 겪는 상황을 솔직히 나눠보고 싶습니다.\n[15–19초] ${d.proof}.\n[20–23초] ${end}`;
+  else if(style==="story") script=`[0–3초] ${hooks[0]}\n[4–8초] 원장인 제가 현장에서 이 문제를 계속 봤습니다.\n[9–14초] 그래서 ${d.proof}.\n[15–19초] ${d.sol}.\n[20–23초] ${end}`;
   else if(style==="before") script=`[0–3초] 예전에는 ${pain}.\n[4–8초] 그런데 과정을 기록하기 시작했습니다.\n[9–14초] ${d.proof}.\n[15–19초] 지금은 ${d.sol}.\n[20–23초] ${end}`;
   else if(style==="myth") script=`[0–3초] ${hooks[0]}\n[4–8초] 더 많이 시킨다고 해결되지는 않습니다.\n[9–14초] 중요한 건 ${d.proof}.\n[15–19초] 그래서 만든 것이 ${d.sol}.\n[20–23초] ${end}`;
   else script=`[0–3초] ${hooks[0]}\n[4–8초] ${pain}을 실제 수업에서 자주 봅니다.\n[9–14초] 그래서 ${d.proof}.\n[15–19초] ${d.sol}.\n[20–23초] ${end}`;
@@ -640,7 +666,7 @@ $("#generate").onclick=()=>{
 $("#cloneBtn").onclick=()=>{const text=clean($("#sourceText").value);if(!text){alert("원본 자막·대본을 붙여넣어 주세요.");return;}const a=analyzeSource(text);cloneCurrent=buildPlan($("#cloneProgram").value,cloneTarget,"","","problem","직설형");cloneCurrent.analysis=a;activePlan=cloneCurrent;renderClone(cloneCurrent,a);};
 $$(".makerTarget .chip").forEach(b=>b.onclick=()=>{$$(".makerTarget .chip").forEach(x=>x.classList.remove("active"));b.classList.add("active");makerTarget=b.dataset.value;});
 $$(".cloneTarget .chip").forEach(b=>b.onclick=()=>{$$(".cloneTarget .chip").forEach(x=>x.classList.remove("active"));b.classList.add("active");cloneTarget=b.dataset.value;});
-$("#program").addEventListener("change",()=>{selectedHook="";angleLabel($("#program").value);generateHookRecommendations();});
+$("#program").addEventListener("change",()=>{selectedHook="";const program=$("#program").value;angleLabel(program);$("#must").value=defaultEnding(program);if(program==="원장님 고민 나누기")$("#tone").value="대화형";generateHookRecommendations();});
 $("#angle").addEventListener("change",generateHookRecommendations);
 $("#hookStrength").addEventListener("change",generateHookRecommendations);
 $("#tone").addEventListener("change",generateHookRecommendations);
