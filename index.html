@@ -721,15 +721,20 @@ function drawDrawable(dr,local,dur,alpha=1,offsetX=0,scale=1){
   if(dr.tagName==="VIDEO"){const target=Math.min(Math.max(0,local),Math.max(0,(dr.duration||dur)-.05));try{if(Math.abs((dr.currentTime||0)-target)>.18)dr.currentTime=target}catch(e){};if(dr.readyState>=2)coverDraw(ctx,dr,dr.videoWidth,dr.videoHeight,alpha,offsetX,scale);else drawBase()}
   else coverDraw(ctx,dr,dr.naturalWidth,dr.naturalHeight,alpha,offsetX,scale);
 }
-async function playTimeline(){
+async function playTimeline(withAudio=true){
   if(!activePlan){alert("먼저 기획안을 만들어 주세요.");return}
   const dur=parseFloat($("#sceneDuration").value),trans=parseFloat($("#transitionDuration").value),type=$("#transition").value,total=dur*5,token=++previewToken;
   $("#status").textContent="미리보기 재생 중...";
   const dr=[];for(let i=0;i<5;i++){try{dr[i]=await loadDrawable(selectedScenes[i])}catch(e){dr[i]=null}}
+  let previewAudio=null;
+  if(withAudio){
+    const chosen=audioAsset||recordedAsset;
+    if(chosen){try{previewAudio=new Audio(chosen.url);previewAudio.currentTime=0;await previewAudio.play()}catch(e){$("#status").textContent="음원 재생 권한을 확인한 뒤 미리보기를 다시 눌러 주세요.";}}
+  }
   const start=performance.now();
   return await new Promise(resolve=>{
     function frame(now){
-      if(token!==previewToken){resolve();return}
+      if(token!==previewToken){if(previewAudio)previewAudio.pause();resolve();return}
       const elapsed=(now-start)/1000,idx=Math.min(4,Math.floor(elapsed/dur)),local=elapsed-idx*dur;
       ctx.clearRect(0,0,1080,1920);
       const inTrans=idx>0 && local<trans;
@@ -739,18 +744,18 @@ async function playTimeline(){
       else if(type==="zoom"){const p=local/trans;drawDrawable(dr[idx-1],dur-trans+local,dur,1-p,0,1+.08*p);drawDrawable(dr[idx],local,dur,p,0,1.08-.08*p)}
       ctx.fillStyle="rgba(0,0,0,.12)";ctx.fillRect(0,0,1080,1920);drawOverlay(activePlan.captions[idx]||activePlan.program,idx);
       $("#bar").style.width=`${Math.min(100,elapsed/total*100)}%`;
-      if(elapsed<total)requestAnimationFrame(frame);else{$("#bar").style.width="100%";$("#status").textContent="미리보기 완료.";resolve()}
+      if(elapsed<total)requestAnimationFrame(frame);else{if(previewAudio)previewAudio.pause();$("#bar").style.width="100%";$("#status").textContent="미리보기 완료.";resolve()}
     }
     requestAnimationFrame(frame)
   })
 }
-$("#preview").onclick=playTimeline;
+$("#preview").onclick=()=>playTimeline(true);
 function bestMime(){const types=["video/mp4;codecs=h264,aac","video/mp4","video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"];return types.find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported(t))||"video/webm"}
 async function exportVideo(){
   if(isExporting||!activePlan)return;isExporting=true;$("#exportVideo").disabled=true;$("#status").textContent="영상 렌더링 중...";
   const cstream=canvas.captureStream(30);let finalStream=cstream,audioCtx=null,audioEl=null,chosen=audioAsset||recordedAsset;
   if(chosen){try{audioEl=new Audio(chosen.url);audioCtx=new (window.AudioContext||window.webkitAudioContext)();const src=audioCtx.createMediaElementSource(audioEl),dest=audioCtx.createMediaStreamDestination();src.connect(dest);src.connect(audioCtx.destination);finalStream=new MediaStream([...cstream.getVideoTracks(),...dest.stream.getAudioTracks()]);await audioCtx.resume();await audioEl.play()}catch(e){}}
-  const mime=bestMime(),chunks=[],rec=new MediaRecorder(finalStream,{mimeType:mime,videoBitsPerSecond:8000000});rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};const done=new Promise(r=>rec.onstop=r);rec.start(250);await playTimeline();rec.stop();if(audioEl)audioEl.pause();await done;if(audioCtx)audioCtx.close();
+  const mime=bestMime(),chunks=[],rec=new MediaRecorder(finalStream,{mimeType:mime,videoBitsPerSecond:8000000});rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};const done=new Promise(r=>rec.onstop=r);rec.start(250);await playTimeline(false);rec.stop();if(audioEl)audioEl.pause();await done;if(audioCtx)audioCtx.close();
   const ext=mime.includes("mp4")?"mp4":"webm",blob=new Blob(chunks,{type:mime}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`해피트리_${activePlan.program}_릴스.${ext}`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);$("#status").textContent=`영상 저장 완료 · ${ext.toUpperCase()}`;isExporting=false;$("#exportVideo").disabled=false;
 }
 $("#exportVideo").onclick=exportVideo;
