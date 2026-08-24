@@ -109,6 +109,8 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
 .optional-toggle{
   border:0;background:none;color:#68768d;font-size:11px;font-weight:800;cursor:pointer;padding:0
 }
+.mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:16px 20px 0}
+.step-note{margin:0 20px 4px;padding:10px 12px;border-radius:12px;background:#eef3f8;color:#43536d;font-size:11px;line-height:1.5}
 .empty-hooks{font-size:11px;color:var(--muted);line-height:1.55;padding:9px 2px}
 
 @media(max-width:1050px){.grid{grid-template-columns:1fr}.video-layout,.cover-layout{grid-template-columns:1fr}.result-empty{min-height:280px}}
@@ -128,19 +130,22 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
 
 <main>
 <section class="hero">
-  <h2>후킹을 고민하지 않아도,<br>선택만 하면 릴스가 만들어집니다.</h2>
-  <p>프로그램과 강조점, 후킹 강도만 고르면 10개의 후킹을 자동 추천합니다. 마음에 드는 문장을 하나 선택하면 대본·자막·영상·썸네일까지 자동으로 연결됩니다.</p>
+  <h2>문해숨·수학숨의 차이를,<br>첫 3초부터 분명하게 알립니다.</h2>
+  <p>학원장과 학부모가 멈춰 보게 할 후킹을 고르면 대본·영상·보이스오버·표지까지 순서대로 완성됩니다.</p>
 </section>
 
 <div class="tabs">
-  <button class="tab active" data-tab="maker">✨ 새 릴스 만들기</button>
-  <button class="tab" data-tab="clone">🔥 잘나가는 릴스 복제하기</button>
-  <button class="tab" data-tab="cover">🖼️ 썸네일·표지</button>
-  <button class="tab" data-tab="video">🎞️ 영상 만들기</button>
+  <button class="tab active" data-tab="maker">1. 후킹·기획</button>
+  <button class="tab" data-tab="video">2. 영상·보이스오버</button>
+  <button class="tab" data-tab="cover">3. 표지·완성</button>
 </div>
 
 <section class="grid">
 <aside class="panel">
+  <div id="planModeSelector">
+    <div class="mode-switch"><button class="chip active" id="modeMaker">새 릴스 기획</button><button class="chip" id="modeClone">잘된 릴스 구조 활용</button></div>
+    <p class="step-note">먼저 제작 방식 하나를 선택하세요. 문해숨·수학숨과 학원장 타깃에 맞는 후킹을 우선 추천합니다.</p>
+  </div>
   <div id="makerForm">
     <div class="ph"><h3>새 릴스 만들기</h3><p>후킹·대본·촬영 장면을 만듭니다.</p></div>
     <div class="pb">
@@ -150,7 +155,7 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
           <option>방학특강</option><option>성장리포트</option><option>시험분석</option><option>학습시스템</option><option>신규상담</option>
         </select>
       </div>
-      <div class="field"><label>타깃</label><div class="segment makerTarget"><button class="chip active" data-value="학부모">학부모</button><button class="chip" data-value="학원장">학원장</button></div></div>
+      <div class="field"><label>누구의 관심을 끌까요?</label><div class="segment makerTarget"><button class="chip" data-value="학부모">학부모</button><button class="chip active" data-value="학원장">학원장</button></div></div>
       <div class="field"><label>톤</label>
         <select id="tone"><option>직설형</option><option>공감형</option><option>원장철학형</option><option>정보형</option><option>반전형</option><option>프리미엄형</option></select>
       </div>
@@ -188,7 +193,7 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
       <div class="field"><label>릴스 구조</label>
         <select id="benchmark"><option value="problem">문제 제기 → 증거 → 해결</option><option value="story">충격 후킹 → 원장 이야기 → 증거</option><option value="before">Before → 변화 → After</option><option value="myth">고정관념 깨기 → 이유 → 해피트리 방식</option></select>
       </div>
-      <div class="field"><label>마지막 브랜드 문장</label><input id="must" value="필요한 교육이 없으면, 해피트리는 직접 만듭니다."></div>
+      <div class="field"><label>마지막 관심 유도 문장</label><input id="must" value="문해숨·수학숨이 궁금한 원장님, 해피트리의 실제 운영 방식을 확인해 보세요."></div>
       <button class="btn primary" id="generate" style="width:100%">선택한 후킹으로 릴스 만들기</button>
     </div>
   </div>
@@ -199,9 +204,9 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
       <div class="field"><label>릴스 링크 <span class="small">(기록용)</span></label><input id="reelUrl" placeholder="https://www.instagram.com/reel/..."></div>
       <div class="field"><label>원본 자막·대본</label><textarea id="sourceText" style="min-height:180px" placeholder="벤치마킹 릴스의 자막/대본을 붙여넣으세요."></textarea></div>
       <div class="field"><label>해피트리 프로그램</label>
-        <select id="cloneProgram"><option>방학특강</option><option>문해숨</option><option>수학숨</option><option>구문숨</option><option>트리톡</option><option>성장리포트</option><option>시험분석</option><option>학습시스템</option><option>신규상담</option></select>
+        <select id="cloneProgram"><option>문해숨</option><option>수학숨</option><option>구문숨</option><option>트리톡</option><option>방학특강</option><option>성장리포트</option><option>시험분석</option><option>학습시스템</option><option>신규상담</option></select>
       </div>
-      <div class="field"><label>타깃</label><div class="segment cloneTarget"><button class="chip active" data-value="학부모">학부모</button><button class="chip" data-value="학원장">학원장</button></div></div>
+      <div class="field"><label>누구의 관심을 끌까요?</label><div class="segment cloneTarget"><button class="chip" data-value="학부모">학부모</button><button class="chip active" data-value="학원장">학원장</button></div></div>
       <button class="btn primary" id="cloneBtn" style="width:100%">분석하고 해피트리 버전 만들기</button>
     </div>
   </div>
@@ -270,9 +275,10 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
       <div class="field"><label>표지용 사진 직접 선택 <span class="small">(선택)</span></label><input type="file" id="coverFile" accept="image/*"></div>
       <div class="field"><label>하단 브랜드 문구</label><input id="coverBrand" value="국영수 문해력센터 해피트리학원"></div>
       <div class="rowbtns">
-        <button class="btn sub" id="makeThumb">썸네일 만들기 · 영상 첫 장면 적용</button>
+        <button class="btn sub" id="makeThumb">표지 미리보기</button>
         <button class="btn primary" id="saveCover">표지 PNG 저장</button>
       </div>
+      <button class="btn ghost" id="applyCoverToVideoBtn" style="width:100%;margin-top:8px">선택사항 · 영상 첫 장면에도 적용</button>
     </div>
   </div>
 </aside>
@@ -301,7 +307,7 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
   </div>
 
   <div id="videoResult" class="result">
-    <div class="top"><div><h3>9:16 릴스 영상</h3><p>자동 선별 · 전환 효과 · 고급 자막 · 보이스오버</p></div><div class="actions"><button class="btn ghost" id="resetVideo">초기화</button></div></div>
+    <div class="top"><div><h3>9:16 릴스 영상</h3><p>자동 선별 · 전환 효과 · 고급 자막 · 보이스오버</p></div><div class="actions"><button class="btn sub" id="videoToCover">다음 · 표지 만들기</button><button class="btn ghost" id="resetVideo">초기화</button></div></div>
     <div class="video-layout">
       <div>
         <div class="phone"><canvas id="canvas" width="1080" height="1920"></canvas></div>
@@ -340,7 +346,7 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
 
 <script>
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-let makerTarget="학부모", cloneTarget="학부모", current=null, cloneCurrent=null, activePlan=null;
+let makerTarget="학원장", cloneTarget="학원장", current=null, cloneCurrent=null, activePlan=null;
 let mediaAssets=[], selectedScenes=[null,null,null,null,null], generatedCoverAsset=null;
 let audioAsset=null, recordedAsset=null, mediaRecorder=null, recordedChunks=[], recStream=null;
 let previewToken=0, isExporting=false, subtitleStyle="premium", coverAsset=null;
@@ -445,6 +451,22 @@ const ANGLES={
 };
 
 const HOOK_BANK={
+  "문해숨":{
+    "문해력 부족이 다른 과목까지 영향":["국어 프로그램인데 수학·영어 상담까지 달라지는 이유가 있습니다.","전 과목 성적의 막힌 지점, 문해력에서 먼저 보일 수 있습니다.","학원장님, 아이가 문제를 못 푸는 이유를 과목 탓만 하고 있지는 않나요?"],
+    "문제집만 더 푸는 방식의 한계":["문제집을 더 풀리는데 설명하는 힘은 왜 그대로일까요?","문제 수가 아니라 읽고 설명하는 과정이 학원의 차이를 만듭니다.","시중 문제집만으로 문해력 수업을 차별화하기 어려웠습니다."],
+    "원장이 직접 만든 이유":["쓸 만한 문해력 프로그램이 없어 원장이 직접 만들었습니다.","학원장님이 찾던 문해력 수업, 현장 문제에서 시작했습니다.","문해숨은 교재 하나가 아니라 학원의 문해력 수업 방식을 바꾸는 시스템입니다."],
+    "아이의 사고과정을 기록":["학부모 상담에서 '잘하고 있습니다' 대신 사고 과정을 보여준다면 어떨까요?","문해숨은 정답보다 아이가 읽고 이해하고 설명한 과정을 남깁니다.","보이는 학습 기록이 학부모의 신뢰와 재등록 이유를 만듭니다."],
+    "문제는 푸는데 설명을 못함":["정답은 맞혔는데 설명하지 못한다면 진짜 이해한 걸까요?","설명하지 못하는 공부를 잡아내는 것이 문해숨의 시작입니다.","아이의 설명 한마디가 학원 수업의 깊이를 보여줍니다."],
+    "국어가 어려워지는 시점":["국어가 갑자기 어려워진 게 아니라 읽는 힘의 빈틈이 드러난 겁니다.","중등 전에 문해력의 빈틈을 발견하는 시스템이 필요합니다.","문해숨으로 학원의 국어 수업에 분명한 이유를 더해보세요."]
+  },
+  "수학숨":{
+    "문장제에서 멈추는 아이":["계산은 되는데 문장제에서 멈추는 아이, 더 풀리기 전에 봐야 할 게 있습니다.","수학 상담에서 부모가 가장 답답해하는 지점을 수학숨이 보여줍니다.","문장제를 읽고 식으로 바꾸는 과정이 보이면 수학 수업이 달라집니다."],
+    "계산보다 풀이과정이 중요":["정답보다 풀이 과정이 보이는 수학 수업, 학부모는 그 차이를 알아봅니다.","계산 결과만 확인하면 아이가 어디서 막혔는지 놓칩니다.","수학숨은 풀이 과정을 학원의 설명력으로 바꿉니다."],
+    "오답 이유를 모르는 공부":["틀린 문제보다 더 중요한 건 왜 틀렸는지 말하지 못하는 것입니다.","오답 원인이 기록되면 다음 수업과 학부모 상담이 달라집니다.","수학숨은 오답을 지우지 않고 성장의 근거로 남깁니다."],
+    "수학도 문해력이 필요":["수학 성적을 가르는 건 계산력만이 아니라 문제를 읽는 힘입니다.","문해력과 수학을 연결하면 학원만의 수학 설명이 생깁니다.","학원장님, 수학 문해력을 실제 수업에서 어떻게 보여주고 계신가요?"],
+    "원장이 직접 만든 이유":["풀이 과정을 제대로 보여주는 도구가 없어 원장이 직접 만들었습니다.","수학숨은 문제집이 아니라 생각의 과정을 남기는 수학 시스템입니다.","학원장님이 찾던 수학 차별화, 더 많은 문제가 아니라 더 보이는 과정입니다."],
+    "문제를 많이 푸는 것의 한계":["문제를 많이 풀어도 같은 데서 막힌다면 양의 문제가 아닙니다.","문제 수로 경쟁하는 수학 수업에서 벗어날 방법이 있습니다.","수학숨은 많이 푸는 수업을 생각이 보이는 수업으로 바꿉니다."]
+  },
   "방학특강":{
     "기존 특강과 다름":[
       "특강이라고 다 같은 특강은 아닙니다.",
@@ -634,16 +656,26 @@ $$(".style-card").forEach(c=>c.onclick=()=>{$$(".style-card").forEach(x=>x.class
 
 function switchTab(name){
   $$(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));
-  $("#makerForm").classList.toggle("hidden",name!=="maker");$("#cloneForm").classList.toggle("hidden",name!=="clone");$("#videoForm").classList.toggle("hidden",name!=="video");$("#coverForm").classList.toggle("hidden",name!=="cover");
-  if(name==="maker"){current?renderMaker(current):showEmpty();}
-  else if(name==="clone"){cloneCurrent?renderClone(cloneCurrent,cloneCurrent.analysis):showEmpty();}
+  $("#planModeSelector").classList.toggle("hidden",name!=="maker");
+  if(name!=="maker"){$("#makerForm").classList.add("hidden");$("#cloneForm").classList.add("hidden");}
+  else setPlanMode($("#modeClone").classList.contains("active")?"clone":"maker");
+  $("#videoForm").classList.toggle("hidden",name!=="video");$("#coverForm").classList.toggle("hidden",name!=="cover");
+  if(name==="maker"){if($("#modeClone").classList.contains("active")){cloneCurrent?renderClone(cloneCurrent,cloneCurrent.analysis):showEmpty();}else{current?renderMaker(current):showEmpty();}}
   else if(name==="video"){showResult("videoResult");if(activePlan)$("#voiceScript").value=activePlan.voice;renderVideoScenes();drawPlaceholder();}
   else if(name==="cover"){showResult("coverResult");if(activePlan && !$("#coverTitle").value)$("#coverTitle").value=activePlan.hooks[0];drawCover();}
 }
+function setPlanMode(mode){
+  const clone=mode==="clone";
+  $("#modeMaker").classList.toggle("active",!clone);$("#modeClone").classList.toggle("active",clone);
+  $("#makerForm").classList.toggle("hidden",clone);$("#cloneForm").classList.toggle("hidden",!clone);
+  if(clone){cloneCurrent?renderClone(cloneCurrent,cloneCurrent.analysis):showEmpty();}else{current?renderMaker(current):showEmpty();}
+}
+$("#modeMaker").onclick=()=>setPlanMode("maker");$("#modeClone").onclick=()=>setPlanMode("clone");
 function showEmpty(){ $("#empty").style.display="grid";["makerResult","cloneResult","videoResult","coverResult"].forEach(x=>$("#"+x).style.display="none"); }
 $$(".tab").forEach(t=>t.onclick=()=>switchTab(t.dataset.tab));
 $("#toVideo").onclick=()=>{activePlan=current;switchTab("video");};$("#cloneToVideo").onclick=()=>{activePlan=cloneCurrent;switchTab("video");};
 $("#toCover").onclick=()=>{activePlan=current;switchTab("cover");};$("#cloneToCover").onclick=()=>{activePlan=cloneCurrent;switchTab("cover");};
+$("#videoToCover").onclick=()=>switchTab("cover");
 
 function revokeAsset(a){if(a&&a.url)URL.revokeObjectURL(a.url);}
 async function fileMeta(file){
@@ -811,7 +843,8 @@ async function applyCoverToVideo(){
   renderMediaPool();renderVideoScenes();drawPlaceholder();
   $("#status").textContent="만든 표지를 영상 첫 장면에 적용했습니다.";
 }
-$("#makeThumb").onclick=applyCoverToVideo;
+$("#makeThumb").onclick=drawCover;
+$("#applyCoverToVideoBtn").onclick=applyCoverToVideo;
 $("#saveCover").onclick=async()=>{await drawCover();const a=document.createElement("a");a.href=coverCanvas.toDataURL("image/png");a.download=`해피트리_${activePlan?activePlan.program:"릴스"}_표지.png`;a.click();};
 
 angleLabel($("#program").value);generateHookRecommendations();drawPlaceholder();drawCover();
