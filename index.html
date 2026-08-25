@@ -628,15 +628,31 @@ function buildPlan(program,target,msg,must,style,tone="직설형"){
   else if(style==="before") script=`[0–3초] 예전에는 ${pain}.\n[4–8초] 그런데 과정을 기록하기 시작했습니다.\n[9–14초] ${d.proof}.\n[15–19초] 지금은 ${d.sol}.\n[20–23초] ${end}`;
   else if(style==="myth") script=`[0–3초] ${hooks[0]}\n[4–8초] 더 많이 시킨다고 해결되지는 않습니다.\n[9–14초] 중요한 건 ${d.proof}.\n[15–19초] 그래서 만든 것이 ${d.sol}.\n[20–23초] ${end}`;
   else script=`[0–3초] ${hooks[0]}\n[4–8초] ${pain}을 실제 수업에서 자주 봅니다.\n[9–14초] 그래서 ${d.proof}.\n[15–19초] ${d.sol}.\n[20–23초] ${end}`;
-  const shots=[
-    ["0–4초","후킹",hooks[0]],
-    ["4–8초","문제 상황",pain],
-    ["8–13초","해피트리 방식",d.scene],
-    ["13–18초","증거",d.proof],
-    ["18–23초","브랜드 결론",end]
-  ];
-  const captions=[hooks[0],"왜 이런 일이 생길까요?",`${program}, 해피트리는 이렇게 바꿨습니다.`,d.sol,end];
-  const voice=`${hooks[0]}\n${pain}을 실제 수업에서 자주 봅니다.\n그래서 ${d.proof}.\n${d.sol}.\n${end}`;
+  const short=s=>s.length>38?s.slice(0,38)+"…":s;
+  let shots,captions,voice;
+  if(program==="원장님 고민 나누기"){
+    const empathy="저도 학원을 운영하며 같은 고민 앞에서 자주 멈췄습니다.";
+    const conversation="정답보다 우리가 겪는 상황과 방법을 솔직히 나누고 싶습니다.";
+    shots=[
+      ["0–4초","고민 후킹",hooks[0]],
+      ["4–8초","원장 공감",empathy],
+      ["8–13초","대화 제안",conversation],
+      ["13–18초","실제 경험",d.proof],
+      ["18–23초","참여 질문",end]
+    ];
+    captions=[hooks[0],empathy,conversation,d.proof,end].map(short);
+    voice=[hooks[0],empathy,conversation,d.proof,end].join("\n");
+  }else{
+    shots=[
+      ["0–4초","후킹",hooks[0]],
+      ["4–8초","문제 상황",pain],
+      ["8–13초","과정과 증거",d.proof],
+      ["13–18초","해피트리 해결 방식",d.sol],
+      ["18–23초","관심 유도",end]
+    ];
+    captions=[hooks[0],pain,d.proof,d.sol,end].map(short);
+    voice=[hooks[0],pain,d.proof,d.sol,end].join("\n");
+  }
   return {
     program,target,hooks,script,shots,captions,voice,
     insta:`${core}\n\n${d.sol}.\n${d.proof}까지 연결해, 결과보다 과정을 놓치지 않겠습니다.\n\n국영수 문해력센터 해피트리학원`
