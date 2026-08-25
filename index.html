@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>해피트리 릴스 제작기 V5</title>
+<title>해피트리 릴스 제작기 V7.2</title>
 <style>
 :root{
   --brand:#142b4f; --brand2:#2d4d7f; --gold:#c7a456;
@@ -124,13 +124,13 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
       <div class="logo">H</div>
       <div><h1>해피트리 릴스 제작기</h1><p>Happytree Content Lab</p></div>
     </div>
-    <div class="pill">V6 · 후킹 자동추천</div>
+    <div class="pill">V7.2 · 조회수 최적화</div>
   </div>
 </header>
 
 <main>
 <section class="hero">
-  <h2>문해숨·수학숨의 차이를,<br>첫 3초부터 분명하게 알립니다.</h2>
+  <h2>원장님의 고민을 건드리고,<br>첫 2초부터 멈춰 보게 만듭니다.</h2>
   <p>학원장과 학부모가 멈춰 보게 할 후킹을 고르면 대본·영상·보이스오버·표지까지 순서대로 완성됩니다.</p>
 </section>
 
@@ -193,7 +193,7 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
       <div class="field"><label>릴스 구조</label>
         <select id="benchmark"><option value="problem">문제 제기 → 증거 → 해결</option><option value="story">충격 후킹 → 원장 이야기 → 증거</option><option value="before">Before → 변화 → After</option><option value="myth">고정관념 깨기 → 이유 → 해피트리 방식</option></select>
       </div>
-      <div class="field"><label>마지막 관심 유도 문장</label><input id="must" value="문해숨·수학숨이 궁금한 원장님, 해피트리의 실제 운영 방식을 확인해 보세요."></div>
+      <div class="field"><label>마지막 관심 유도 문장</label><input id="must" value="학원에 적용한 실제 운영 방식이 궁금하다면 댓글에 ‘문해숨’을 남겨주세요."></div>
       <button class="btn primary" id="generate" style="width:100%">선택한 후킹으로 릴스 만들기</button>
     </div>
   </div>
@@ -478,7 +478,7 @@ const HOOK_BANK={
     "문제집만 더 푸는 방식의 한계":["문제집을 더 풀리는데 설명하는 힘은 왜 그대로일까요?","문제 수가 아니라 읽고 설명하는 과정이 학원의 차이를 만듭니다.","시중 문제집만으로 문해력 수업을 차별화하기 어려웠습니다."],
     "원장이 직접 만든 이유":["쓸 만한 문해력 프로그램이 없어 원장이 직접 만들었습니다.","학원장님이 찾던 문해력 수업, 현장 문제에서 시작했습니다.","문해숨은 교재 하나가 아니라 학원의 문해력 수업 방식을 바꾸는 시스템입니다."],
     "아이의 사고과정을 기록":["학부모 상담에서 '잘하고 있습니다' 대신 사고 과정을 보여준다면 어떨까요?","문해숨은 정답보다 아이가 읽고 이해하고 설명한 과정을 남깁니다.","보이는 학습 기록이 학부모의 신뢰와 재등록 이유를 만듭니다."],
-    "문제는 푸는데 설명을 못함":["정답은 맞혔는데 설명하지 못한다면 진짜 이해한 걸까요?","설명하지 못하는 공부를 잡아내는 것이 문해숨의 시작입니다.","아이의 설명 한마디가 학원 수업의 깊이를 보여줍니다."],
+    "문제는 푸는데 설명을 못함":["요즘 엄마들은 ‘문해력 수업합니다’라는 말만으로 결제하지 않습니다.","정답은 맞혔는데 설명하지 못한다면 진짜 이해한 걸까요?","아이의 설명 한마디가 학원 수업의 깊이를 보여줍니다."],
     "국어가 어려워지는 시점":["국어가 갑자기 어려워진 게 아니라 읽는 힘의 빈틈이 드러난 겁니다.","중등 전에 문해력의 빈틈을 발견하는 시스템이 필요합니다.","문해숨으로 학원의 국어 수업에 분명한 이유를 더해보세요."]
   },
   "수학숨":{
@@ -542,7 +542,7 @@ function angleLabel(program){
 function defaultEnding(program){
   return program==="원장님 고민 나누기"
     ? "원장님들은 어떻게 풀고 계신가요? 경험과 방법을 함께 나눠주세요."
-    : "문해숨·수학숨이 궁금한 원장님, 해피트리의 실제 운영 방식을 확인해 보세요.";
+    : `학원에 적용한 실제 운영 방식이 궁금하다면 댓글에 ‘${program}’을 남겨주세요.`;
 }
 
 function genericHookPool(program, angle, target){
@@ -623,7 +623,21 @@ function buildPlan(program,target,msg,must,style,tone="직설형"){
     program==="원장님 고민 나누기"?"답을 정하기보다 원장님들의 경험을 함께 듣고 싶습니다.":target==="학부모"?"보내는 것보다 중요한 건, 아이의 공부가 보이게 만드는 겁니다.":"좋은 프로그램도 선택할 이유가 보여야 합니다."
   ];
   let shots,captions,voiceParts;
-  if(program==="원장님 고민 나누기"){
+  if(program==="문해숨"&&target==="학원장"&&!clean(msg)){
+    const reason="좋아질 거라는 설명만 있고, 아이의 변화가 눈에 보이지 않기 때문입니다.";
+    const redesign="그래서 해피트리는 기존 문해력 특강부터 다시 설계했습니다.";
+    const system="수업하고 끝나는 프로그램이 아니라, 아이가 직접 참여하고 반복하는 시스템으로 만들었습니다.";
+    const origin="쓸 만한 프로그램을 찾다가 결국 원장이 직접 만들었습니다. 문해에 숨을 불어넣는 해피트리 자체 문해력 시스템, 문해숨.";
+    shots=[
+      ["0–2초","원장 문제 후킹",hooks[0]],
+      ["2–5초","결제가 안 되는 이유",reason],
+      ["5–9초","기존 방식 재설계",redesign],
+      ["9–14초","참여·반복 차별점",system],
+      ["14–20초","개발 이유와 행동 유도",`${origin} ${end}`]
+    ];
+    captions=[shortCaption(hooks[0]),"변화가 눈에 보이지 않기 때문입니다","기존 문해력 특강부터 다시 설계했습니다","직접 참여하고 반복하는 시스템","댓글에 ‘문해숨’을 남겨주세요"];
+    voiceParts=[hooks[0],reason,redesign,system,`${origin} ${end}`];
+  }else if(program==="원장님 고민 나누기"){
     const empathy="저도 학원을 운영하며 같은 고민 앞에서 자주 멈췄습니다.";
     const conversation="정답보다 우리가 겪는 상황과 방법을 솔직히 나누고 싶습니다.";
     shots=[
@@ -863,7 +877,9 @@ async function playTimeline(withAudio=true){
 $("#preview").onclick=()=>playTimeline(true);
 function bestMime(){const types=["video/mp4;codecs=h264,aac","video/mp4","video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"];return types.find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported(t))||"video/webm"}
 async function exportVideo(){
-  if(isExporting||!activePlan)return;isExporting=true;$("#exportVideo").disabled=true;$("#status").textContent="영상 렌더링 중...";
+  if(isExporting||!activePlan)return;
+  if(!(audioAsset||recordedAsset)&&!confirm("현재 음원이 없습니다. 무음 영상은 이탈률이 높을 수 있습니다. 그래도 저장할까요?")){$("#status").textContent="저장 전 보이스오버를 녹음하거나 음원을 불러와 주세요.";return;}
+  isExporting=true;$("#exportVideo").disabled=true;$("#status").textContent="영상 렌더링 중...";
   const cstream=canvas.captureStream(30);let finalStream=cstream,audioCtx=null,audioEl=null,chosen=audioAsset||recordedAsset;
   if(chosen){try{audioEl=new Audio(chosen.url);audioCtx=new (window.AudioContext||window.webkitAudioContext)();const src=audioCtx.createMediaElementSource(audioEl),dest=audioCtx.createMediaStreamDestination();src.connect(dest);src.connect(audioCtx.destination);finalStream=new MediaStream([...cstream.getVideoTracks(),...dest.stream.getAudioTracks()]);await audioCtx.resume();await audioEl.play()}catch(e){}}
   const mime=bestMime(),chunks=[],rec=new MediaRecorder(finalStream,{mimeType:mime,videoBitsPerSecond:8000000});rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};const done=new Promise(r=>rec.onstop=r);rec.start(250);await playTimeline(false);rec.stop();if(audioEl)audioEl.pause();await done;if(audioCtx)audioCtx.close();
