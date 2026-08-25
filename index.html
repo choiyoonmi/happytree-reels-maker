@@ -628,7 +628,6 @@ function buildPlan(program,target,msg,must,style,tone="직설형"){
   else if(style==="before") script=`[0–3초] 예전에는 ${pain}.\n[4–8초] 그런데 과정을 기록하기 시작했습니다.\n[9–14초] ${d.proof}.\n[15–19초] 지금은 ${d.sol}.\n[20–23초] ${end}`;
   else if(style==="myth") script=`[0–3초] ${hooks[0]}\n[4–8초] 더 많이 시킨다고 해결되지는 않습니다.\n[9–14초] 중요한 건 ${d.proof}.\n[15–19초] 그래서 만든 것이 ${d.sol}.\n[20–23초] ${end}`;
   else script=`[0–3초] ${hooks[0]}\n[4–8초] ${pain}을 실제 수업에서 자주 봅니다.\n[9–14초] 그래서 ${d.proof}.\n[15–19초] ${d.sol}.\n[20–23초] ${end}`;
-  const short=s=>s.length>38?s.slice(0,38)+"…":s;
   let shots,captions,voice;
   if(program==="원장님 고민 나누기"){
     const empathy="저도 학원을 운영하며 같은 고민 앞에서 자주 멈췄습니다.";
@@ -640,7 +639,7 @@ function buildPlan(program,target,msg,must,style,tone="직설형"){
       ["13–18초","실제 경험",d.proof],
       ["18–23초","참여 질문",end]
     ];
-    captions=[hooks[0],empathy,conversation,d.proof,end].map(short);
+    captions=[hooks[0],empathy,conversation,d.proof,end];
     voice=[hooks[0],empathy,conversation,d.proof,end].join("\n");
   }else{
     shots=[
@@ -650,7 +649,7 @@ function buildPlan(program,target,msg,must,style,tone="직설형"){
       ["13–18초","해피트리 해결 방식",d.sol],
       ["18–23초","관심 유도",end]
     ];
-    captions=[hooks[0],pain,d.proof,d.sol,end].map(short);
+    captions=[hooks[0],pain,d.proof,d.sol,end];
     voice=[hooks[0],pain,d.proof,d.sol,end].join("\n");
   }
   return {
@@ -772,7 +771,7 @@ $("#deleteRecord").onclick=()=>{if(recordedAsset)revokeAsset(recordedAsset);reco
 
 const canvas=$("#canvas"),ctx=canvas.getContext("2d");
 function roundedRect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
-function wrapText(c,text,maxWidth,fontSize,weight=800){c.font=`${weight} ${fontSize}px system-ui`;const words=(text||"").split(/\s+/);let lines=[],line="";for(const w of words){const test=line?line+" "+w:w;if(c.measureText(test).width>maxWidth&&line){lines.push(line);line=w}else line=test}if(line)lines.push(line);return lines.slice(0,4)}
+function wrapText(c,text,maxWidth,fontSize,weight=800,maxLines=4){c.font=`${weight} ${fontSize}px system-ui`;const words=(text||"").split(/\s+/);let lines=[],line="";for(const w of words){const test=line?line+" "+w:w;if(c.measureText(test).width>maxWidth&&line){lines.push(line);line=w}else line=test}if(line)lines.push(line);return Number.isFinite(maxLines)?lines.slice(0,maxLines):lines}
 function coverDraw(c,source,sw,sh,alpha=1,offsetX=0,scale=1){
   const cw=c.canvas.width,ch=c.canvas.height,sr=sw/sh,cr=cw/ch;let sx=0,sy=0,sww=sw,shh=sh;
   if(sr>cr){sww=sh*cr;sx=(sw-sww)/2}else{shh=sw/cr;sy=(sh-shh)/2}
@@ -784,12 +783,14 @@ function drawBase(c=ctx){
   c.fillStyle="#fff";c.textAlign="center";c.font="900 72px system-ui";c.fillText(activePlan?activePlan.program:"HAPPYTREE",540,900);c.font="500 36px system-ui";c.fillStyle="rgba(255,255,255,.82)";c.fillText("국영수 문해력센터 해피트리학원",540,960);
 }
 function drawOverlay(caption,idx){
-  const pos=$("#captionPos").value,brand=$("#brandShow").value==="yes";const lines=wrapText(ctx,caption,860,subtitleStyle==="bold"?64:56);
-  let lineH=subtitleStyle==="bold"?84:76,pad=subtitleStyle==="minimal"?10:32,boxH=lines.length*lineH+pad*2,y=pos==="top"?150:pos==="center"?(1920-boxH)/2:1920-boxH-170;
+  const pos=$("#captionPos").value,brand=$("#brandShow").value==="yes",weight=subtitleStyle==="bold"?900:800;
+  let fontSize=subtitleStyle==="bold"?64:subtitleStyle==="minimal"?54:56,lines=wrapText(ctx,caption,860,fontSize,weight,Infinity);
+  while(lines.length>4&&fontSize>38){fontSize-=4;lines=wrapText(ctx,caption,860,fontSize,weight,Infinity)}
+  let lineH=Math.round(fontSize*1.35),pad=subtitleStyle==="minimal"?10:32,boxH=lines.length*lineH+pad*2,y=pos==="top"?150:pos==="center"?(1920-boxH)/2:1920-boxH-170;
   ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";
-  if(subtitleStyle==="premium"){ctx.fillStyle="rgba(0,0,0,.58)";roundedRect(ctx,70,y,940,boxH,28);ctx.fill();ctx.fillStyle="#fff";ctx.font="800 56px system-ui";}
-  else if(subtitleStyle==="bold"){ctx.fillStyle="rgba(0,0,0,.35)";ctx.fillRect(0,y-20,1080,boxH+40);ctx.fillStyle="#fff";ctx.font="900 64px system-ui";ctx.shadowColor="rgba(0,0,0,.55)";ctx.shadowBlur=18;}
-  else {ctx.fillStyle="#fff";ctx.font="800 54px system-ui";ctx.shadowColor="rgba(0,0,0,.85)";ctx.shadowBlur=16;ctx.shadowOffsetY=4;}
+  if(subtitleStyle==="premium"){ctx.fillStyle="rgba(0,0,0,.58)";roundedRect(ctx,70,y,940,boxH,28);ctx.fill();ctx.fillStyle="#fff";ctx.font=`800 ${fontSize}px system-ui`;}
+  else if(subtitleStyle==="bold"){ctx.fillStyle="rgba(0,0,0,.35)";ctx.fillRect(0,y-20,1080,boxH+40);ctx.fillStyle="#fff";ctx.font=`900 ${fontSize}px system-ui`;ctx.shadowColor="rgba(0,0,0,.55)";ctx.shadowBlur=18;}
+  else {ctx.fillStyle="#fff";ctx.font=`800 ${fontSize}px system-ui`;ctx.shadowColor="rgba(0,0,0,.85)";ctx.shadowBlur=16;ctx.shadowOffsetY=4;}
   lines.forEach((l,i)=>ctx.fillText(l,540,y+pad+lineH*(i+.5)));
   ctx.shadowBlur=0;ctx.shadowOffsetY=0;
   if(brand){ctx.font="700 34px system-ui";ctx.textAlign="left";ctx.fillStyle="rgba(255,255,255,.92)";ctx.fillText("HAPPYTREE ACADEMY",70,1840);}
