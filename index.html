@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>해피트리 릴스 제작기 V7.2</title>
+<title>해피트리 릴스 제작기 V7.3</title>
 <style>
 :root{
   --brand:#142b4f; --brand2:#2d4d7f; --gold:#c7a456;
@@ -124,7 +124,7 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
       <div class="logo">H</div>
       <div><h1>해피트리 릴스 제작기</h1><p>Happytree Content Lab</p></div>
     </div>
-    <div class="pill">V7.2 · 조회수 최적화</div>
+    <div class="pill">V7.3 · 자동 컷·자막 편집</div>
   </div>
 </header>
 
@@ -254,7 +254,7 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
       <div class="notice" style="margin-top:10px"><b>무료 사용 방법</b><br>녹음 종료 후 미리 듣기로 확인하고 음원을 저장해 두세요. 다음 릴스를 만들 때 위의 ‘저장해 둔 내 음원 불러오기’에서 다시 사용할 수 있습니다.</div>
 
       <div class="rowbtns" style="margin-top:12px">
-        <button class="btn primary" id="autoSelectBtn">자동 선별하기</button>
+        <button class="btn primary" id="autoSelectBtn">✨ 자동 컷·자막 편집</button>
         <button class="btn ghost" id="reshuffleBtn">다시 고르기</button>
       </div>
 
@@ -318,7 +318,7 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
         <div class="controls"><button class="btn sub" id="preview">▶ 미리보기</button><button class="btn primary" id="exportVideo">⬇ 영상 저장</button></div>
       </div>
       <div>
-        <div class="card"><h4>선택된 5개 장면 <span>직접 교체 가능</span></h4><div id="videoScenes" class="scene-list"></div></div>
+        <div class="card"><h4>자동 편집된 장면 <span>대본 문장별 컷·자막 자동 연결</span></h4><div id="videoScenes" class="scene-list"></div></div>
         <div class="notice"><b>영상 저장</b><br>브라우저가 지원하면 MP4, 아니면 WebM으로 저장됩니다. WebM은 CapCut에서 열어 MP4로 다시 저장할 수 있습니다.</div>
       </div>
     </div>
@@ -349,7 +349,7 @@ canvas{display:block;width:100%;aspect-ratio:9/16;background:#111;border-radius:
 <script>
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 let makerTarget="학원장", cloneTarget="학원장", current=null, cloneCurrent=null, activePlan=null;
-let mediaAssets=[], selectedScenes=[null,null,null,null,null], generatedCoverAsset=null;
+let mediaAssets=[], selectedScenes=[], generatedCoverAsset=null;
 let audioAsset=null, recordedAsset=null, mediaRecorder=null, recordedChunks=[], recStream=null;
 let previewToken=0, isExporting=false, subtitleStyle="premium", coverAsset=null;
 
@@ -761,7 +761,7 @@ function scoreAsset(a,mode){
   s+=Math.min(12,(a.size/1024/1024)*2);return Math.round(s);
 }
 async function ingestFiles(files){
-  mediaAssets.forEach(revokeAsset);mediaAssets=[];generatedCoverAsset=null;selectedScenes=[null,null,null,null,null];$("#mediaPool").innerHTML='<div class="small">분석 중...</div>';
+  mediaAssets.forEach(revokeAsset);mediaAssets=[];generatedCoverAsset=null;selectedScenes=[];$("#mediaPool").innerHTML='<div class="small">분석 중...</div>';
   for(const f of [...files].slice(0,20)){try{const a=await fileMeta(f);a.score=scoreAsset(a,$("#selectMode").value);mediaAssets.push(a)}catch(e){}}
   mediaAssets.sort((a,b)=>b.score-a.score);renderMediaPool();
   if(activePlan&&mediaAssets.length)autoSelect();
@@ -773,16 +773,37 @@ function renderMediaPool(){
 $("#mediaFiles").onchange=e=>ingestFiles(e.target.files);$("#selectMode").onchange=()=>{mediaAssets.forEach(a=>a.score=scoreAsset(a,$("#selectMode").value));mediaAssets.sort((a,b)=>b.score-a.score);renderMediaPool();};
 function autoSelect(){
   if(!activePlan){alert("먼저 릴스 기획안을 만들어 주세요.");return;}if(!mediaAssets.length){alert("먼저 사진·영상을 업로드해 주세요.");return;}
-  let pool=[...mediaAssets].sort((a,b)=>b.score-a.score),picked=[];
-  if($("#selectMode").value==="balanced"){const v=pool.filter(x=>x.type==="video"),im=pool.filter(x=>x.type==="image");picked=[v[0],im[0],v[1]||im[1],im[1]||v[2],pool.find(x=>!picked.includes(x))].filter(Boolean)}else picked=pool.slice(0,5);
-  while(picked.length<5)picked.push(pool[picked.length]||null);selectedScenes=picked.slice(0,5);renderVideoScenes();drawPlaceholder();drawCover();$("#status").textContent="업로드한 소재에서 베스트 5개 장면을 자동 배치했습니다. 미리보기를 눌러 확인하세요.";
+  rebuildPlanFromVoice();
+  let pool=[...mediaAssets].sort((a,b)=>b.score-a.score),count=activePlan.captions.length;
+  if($("#selectMode").value==="balanced")pool.sort((a,b)=>(a.type===b.type?b.score-a.score:(a.type==="video"?-1:1)));
+  const picked=[];
+  for(let i=0;i<count;i++){
+    let source=pool[i%pool.length];
+    if(i&&pool.length>1&&picked[i-1]&&picked[i-1].url===source.url)source=pool[(i+1)%pool.length];
+    const repeats=Math.floor(i/pool.length),maxStart=source.type==="video"?Math.max(0,source.duration-2.2):0;
+    picked.push({...source,clipStart:maxStart?Math.min(maxStart,repeats*2.5):0});
+  }
+  selectedScenes=picked;
+  renderVideoScenes();drawPlaceholder();drawCover();$("#status").textContent=`자동 편집 완료 · ${count}개 컷과 자막을 대본 순서대로 연결했습니다.`;
+}
+function splitNarration(text){
+  const raw=clean(text).split(/\n+|(?<=[.!?。！？])\s+/).map(clean).filter(Boolean),out=[];
+  raw.forEach(part=>{if(part.length<=48)out.push(part);else{const chunks=part.split(/(?<=[,，])\s*/);let line="";chunks.forEach(x=>{if((line+x).length>48&&line){out.push(line);line=x}else line+=(line?" ":"")+x});if(line)out.push(line)}});
+  return out.slice(0,10);
+}
+function rebuildPlanFromVoice(){
+  if(!activePlan)return;
+  const parts=splitNarration($("#voiceScript").value);
+  if(parts.length<2)return;
+  activePlan.voiceParts=parts;activePlan.voice=parts.join("\n");activePlan.captions=parts.map(x=>shortCaption(x,32));
+  activePlan.shots=parts.map((x,i)=>[i===0?"0–2초":"자동","자동 컷 "+(i+1),x]);
 }
 $("#autoSelectBtn").onclick=autoSelect;$("#reshuffleBtn").onclick=()=>{if(!mediaAssets.length)return;mediaAssets.sort(()=>Math.random()-0.5);autoSelect();};
 window.pickScene=i=>{const n=parseInt(prompt("현재 점수 순 소재 번호를 입력하세요.","1"),10)-1;if(mediaAssets[n]){selectedScenes[i]=mediaAssets[n];renderVideoScenes();drawCover();}};
 window.clearScene=i=>{selectedScenes[i]=null;renderVideoScenes();drawCover();};
 function renderVideoScenes(){
   if(!activePlan){$("#videoScenes").innerHTML='<div class="small">먼저 기획안을 만들어 주세요.</div>';return;}
-  $("#videoScenes").innerHTML=activePlan.shots.map((s,i)=>{const a=selectedScenes[i];return `<div class="scene"><strong>${i+1}. ${esc(s[1])}</strong><small>${esc(s[2])}<br>자막: ${esc(activePlan.captions[i]||"")}</small><div class="scene-actions"><button onclick="pickScene(${i})">교체</button><button onclick="clearScene(${i})">비우기</button><span class="small ${a?"ok":""}">${a?esc(a.name):"자동 배정 전"}</span></div></div>`}).join("");
+  $("#videoScenes").innerHTML=activePlan.captions.map((caption,i)=>{const s=activePlan.shots[i]||["자동","자동 컷 "+(i+1),caption],a=selectedScenes[i],cut=a&&a.type==="video"&&a.clipStart?` · ${a.clipStart.toFixed(1)}초부터`:"";return `<div class="scene"><strong>${i+1}. ${esc(s[1])}</strong><small>${esc(s[2])}<br>자동 자막: ${esc(caption)}</small><div class="scene-actions"><button onclick="pickScene(${i})">교체</button><button onclick="clearScene(${i})">비우기</button><span class="small ${a?"ok":""}">${a?esc(a.name)+cut:"자동 배정 전"}</span></div></div>`}).join("");
 }
 $("#audioFile").onchange=e=>{if(audioAsset)revokeAsset(audioAsset);const f=e.target.files[0];audioAsset=f?{file:f,url:URL.createObjectURL(f)}:null;$("#recordState").textContent=f?"업로드 오디오 사용 준비 완료.":"오디오가 선택되지 않았습니다.";};
 $("#startRecord").onclick=async()=>{try{recStream=await navigator.mediaDevices.getUserMedia({audio:true});recordedChunks=[];mediaRecorder=new MediaRecorder(recStream);mediaRecorder.ondataavailable=e=>{if(e.data.size)recordedChunks.push(e.data)};mediaRecorder.onstop=()=>{if(recordedAsset)revokeAsset(recordedAsset);const blob=new Blob(recordedChunks,{type:"audio/webm"});recordedAsset={url:URL.createObjectURL(blob),blob};$("#recordState").textContent="녹음 저장 완료. 영상에 사용할 수 있습니다.";};mediaRecorder.start();$("#recordState").textContent="녹음 중...";}catch(e){alert("마이크 권한이 필요합니다.");}};
@@ -817,7 +838,7 @@ function drawOverlay(caption,idx){
   lines.forEach((l,i)=>ctx.fillText(l,540,y+pad+lineH*(i+.5)));
   ctx.shadowBlur=0;ctx.shadowOffsetY=0;
   if(brand){ctx.font="700 34px system-ui";ctx.textAlign="left";ctx.fillStyle="rgba(255,255,255,.92)";ctx.fillText("HAPPYTREE ACADEMY",70,1840);}
-  ctx.font="700 30px system-ui";ctx.textAlign="right";ctx.fillStyle="rgba(255,255,255,.78)";ctx.fillText(`${idx+1}/5`,1010,90);ctx.restore();
+  ctx.font="700 30px system-ui";ctx.textAlign="right";ctx.fillStyle="rgba(255,255,255,.78)";ctx.fillText(`${idx+1}/${activePlan?activePlan.captions.length:1}`,1010,90);ctx.restore();
 }
 function drawPlaceholder(){drawBase();if(activePlan)drawOverlay(activePlan.captions[0]||activePlan.program,0);}
 async function loadDrawable(asset){if(!asset)return null;if(asset.type==="image"){return await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=asset.url})}return await new Promise((res,rej)=>{const v=document.createElement("video");v.src=asset.url;v.muted=true;v.playsInline=true;v.preload="auto";v.onloadeddata=()=>res(v);v.onerror=rej})}
@@ -830,7 +851,9 @@ async function playTimeline(withAudio=true){
   if(!activePlan){alert("먼저 기획안을 만들어 주세요.");return}
   const speed=$("#sceneDuration").value,trans=parseFloat($("#transitionDuration").value),type=$("#transition").value,token=++previewToken;
   $("#status").textContent="미리보기 재생 중...";
-  const dr=[];for(let i=0;i<5;i++){try{dr[i]=await loadDrawable(selectedScenes[i])}catch(e){dr[i]=null}}
+  rebuildPlanFromVoice();const sceneCount=activePlan.captions.length;
+  while(selectedScenes.length<sceneCount)selectedScenes.push(null);selectedScenes=selectedScenes.slice(0,sceneCount);
+  const dr=[];for(let i=0;i<sceneCount;i++){try{dr[i]=await loadDrawable(selectedScenes[i])}catch(e){dr[i]=null}}
   let previewAudio=null,audioDuration=0,chosen=audioAsset||recordedAsset;
   if(chosen){
     try{const probe=new Audio(chosen.url);await new Promise(r=>{if(probe.readyState>=1)r();else{probe.onloadedmetadata=r;probe.onerror=r}});audioDuration=isFinite(probe.duration)?probe.duration:0}catch(e){}
@@ -855,7 +878,7 @@ async function playTimeline(withAudio=true){
         if(!item||item.tagName!=="VIDEO")return;
         const shouldPlay=j===idx||(inTrans&&j===idx-1);
         if(shouldPlay){
-          if(j===idx&&lastIdx!==idx){try{item.currentTime=0}catch(e){}}
+          if(j===idx&&lastIdx!==idx){try{item.currentTime=selectedScenes[j]?.clipStart||0}catch(e){}}
           if(item.paused)item.play().catch(()=>{});
         }else if(!item.paused)item.pause();
       });
@@ -886,7 +909,7 @@ async function exportVideo(){
   const ext=mime.includes("mp4")?"mp4":"webm",blob=new Blob(chunks,{type:mime}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`해피트리_${activePlan.program}_릴스.${ext}`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);$("#status").textContent=`영상 저장 완료 · ${ext.toUpperCase()}`;isExporting=false;$("#exportVideo").disabled=false;
 }
 $("#exportVideo").onclick=exportVideo;
-$("#resetVideo").onclick=()=>{previewToken++;mediaAssets.forEach(revokeAsset);mediaAssets=[];generatedCoverAsset=null;selectedScenes=[null,null,null,null,null];if(audioAsset)revokeAsset(audioAsset);if(recordedAsset)revokeAsset(recordedAsset);audioAsset=recordedAsset=null;$("#mediaFiles").value="";$("#audioFile").value="";renderMediaPool();renderVideoScenes();drawPlaceholder();$("#bar").style.width="0";$("#status").textContent="초기화되었습니다.";};
+$("#resetVideo").onclick=()=>{previewToken++;mediaAssets.forEach(revokeAsset);mediaAssets=[];generatedCoverAsset=null;selectedScenes=[];if(audioAsset)revokeAsset(audioAsset);if(recordedAsset)revokeAsset(recordedAsset);audioAsset=recordedAsset=null;$("#mediaFiles").value="";$("#audioFile").value="";renderMediaPool();renderVideoScenes();drawPlaceholder();$("#bar").style.width="0";$("#status").textContent="초기화되었습니다.";};
 
 const coverCanvas=$("#coverCanvas"),cctx=coverCanvas.getContext("2d");
 $("#coverFile").onchange=e=>{if(coverAsset)revokeAsset(coverAsset);const f=e.target.files[0];coverAsset=f?{url:URL.createObjectURL(f),type:"image"}:null;drawCover();};
